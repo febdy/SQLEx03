@@ -50,37 +50,26 @@ WHERE de.department_id = maxAvgDe.department_id;
 문제4.
 평균 급여(salary)가 가장 높은 지역은? 
 */
-SELECT avgSalaryByLocation.region_name
-FROM(SELECT region_name, AVG(salary) salary
-    FROM (SELECT em.salary, coReLoDe.region_name
-        FROM employees em,
-            (SELECT de.department_id, coReLo.region_name
-            FROM departments de,
-                (SELECT lo.location_id, coRe.region_name
-                FROM locations lo,
-                    (SELECT co.country_id, re.region_name
-                    FROM countries co, regions re
-                    WHERE co.region_id = re.region_id) coRe
-                WHERE lo.country_id = coRe.country_id) coReLo
-            WHERE de.location_id = coReLo.location_id) coReLoDe
-        WHERE em.department_id = coReLoDe.department_id) coReLoDeEm
-    GROUP BY region_name) avgSalaryByLocation,
-    (SELECT MAX(salary) salary
-    FROM (SELECT region_name, AVG(salary) salary
-        FROM (SELECT em.salary, coReLoDe.region_name
-            FROM employees em,
-                (SELECT de.department_id, coReLo.region_name
-                FROM departments de,
-                    (SELECT lo.location_id, coRe.region_name
-                    FROM locations lo,
-                        (SELECT co.country_id, re.region_name
-                        FROM countries co, regions re
-                        WHERE co.region_id = re.region_id) coRe
-                    WHERE lo.country_id = coRe.country_id) coReLo
-                WHERE de.location_id = coReLo.location_id) coReLoDe
-            WHERE em.department_id = coReLoDe.department_id)
-        GROUP BY region_name) ) maxAvgSalary
-WHERE avgSalaryByLocation.salary = maxAvgSalary.salary;
+SELECT region_name
+FROM(SELECT MAX(salary) salary
+     FROM (SELECT AVG(salary) salary, region_name
+     FROM(SELECT em.salary, re.region_name
+          FROM employees em, departments de, locations lo, countries co, regions re
+          WHERE em.department_id = de.department_id
+          AND de.location_id = lo.location_id
+          AND lo.country_id = co.country_id
+          AND co.region_id = re.region_id)
+     GROUP BY region_name)) maxAvgSalary,
+    
+     (SELECT AVG(salary) salary, region_name
+      FROM(SELECT em.salary, re.region_name
+           FROM employees em, departments de, locations lo, countries co, regions re
+           WHERE em.department_id = de.department_id
+           AND de.location_id = lo.location_id
+           AND lo.country_id = co.country_id
+           AND co.region_id = re.region_id)
+      GROUP BY region_name) avgSalaryByRegion
+WHERE maxAvgSalary.salary = avgSalaryByRegion.salary;
 
 
 /*
